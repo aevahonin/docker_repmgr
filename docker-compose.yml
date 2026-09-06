@@ -1,0 +1,47 @@
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      args:
+        POSTGRES_VERSION: "17"
+        PG_MAJOR: "17"
+        REPMGR_VERSION: "5.5.0"
+    container_name: ${CONTAINER_NAME:-pg-node}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DOCKER_SUBNET: ${DOCKER_SUBNET:-172.28.0.0/16}
+    # Порт наружу не публикуем: доступ к кластеру - только через postgres-network
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/pg_hba.conf:/etc/pg_hba.conf.template:ro
+    networks:
+      postgres-network:
+        ipv4_address: ${NODE_IP:-172.28.0.10}
+    shm_size: 256mb
+    # tini как PID 1: корректная обработка сигналов и отсутствие зомби
+    init: true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-appdb} -q"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  postgres-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${DOCKER_SUBNET:-172.28.0.0/16}
+
+volumes:
+  postgres_data:
