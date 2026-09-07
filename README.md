@@ -1,5 +1,7 @@
 # Dockerized PostgreSQL with repmgr
 
+**English** | [Русский](README.ru.md)
+
 Docker setup for a PostgreSQL cluster managed by [repmgr](https://repmgr.org/) — primary/standby replication with automatic failover.
 
 > **Note:** documentation and code comments in this repository are in English; the original working notes were in Russian.
